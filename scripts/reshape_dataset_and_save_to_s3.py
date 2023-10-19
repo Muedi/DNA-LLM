@@ -1,5 +1,14 @@
 from datasets import load_dataset
 from datasets import concatenate_datasets
+from itertools import islice
+
+def batched(iterable, n):
+    # batched('ABCDEFG', 3) --> ABC DEF G
+    if n < 1:
+        raise ValueError('n must be at least one')
+    it = iter(iterable)
+    while batch := tuple(islice(it, n)):
+        yield batch
 
 ## load the partial datasets and concatenate them
 for i in range(0, 78):
@@ -22,8 +31,8 @@ full_dataset = full_dataset.filter(lambda example: example["seq_length"] == 2000
 ## reshape sequences to batches of 2000 characters
 def chunk_sequences(examples):
     chunks = []
-    for sentence in examples['sequence']:
-        chunks += [sentence[i:i + 2000] for i in range(0, len(sentence), 2000)]
+    for batch in batched(examples['sequence'], 2000):
+        chunks.append(batch)
     return {'chunks': chunks}
 
 full_dataset = full_dataset.map(chunk_sequences, batched=True, batch_size=1000)
