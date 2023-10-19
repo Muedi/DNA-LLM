@@ -2,5 +2,5 @@
 DNA LLM
 
 ToDo:
--[] De-duplication
--[] Pretraining with GPT-NeoX
+-[ ] De-duplication
+-[ ] Pretraining with GPT-NeoX
