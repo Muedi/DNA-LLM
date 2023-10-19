@@ -36,6 +36,7 @@ def chunk_sequences(examples):
     return {'chunks': chunks}
 
 full_dataset = full_dataset.map(chunk_sequences, batched=True, batch_size=1000)
+full_dataset = full_dataset.remove_columns(['sequence', 'seq_length'])
 full_dataset.save_to_disk("s3://dna_llm/ncbi_genbank_full_2000_bp_chunks")
 full_dataset.push_to_hub("Hack90/ncbi_genbank_full_2000_bp_chunks")
 
