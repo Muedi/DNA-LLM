@@ -1,0 +1,12 @@
+name: deduplication
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - numpy
+  - pandas
+  - datasets
+  - MinHash 
+  - sentence_transformers 
+  - bioconda sourmash
+  
