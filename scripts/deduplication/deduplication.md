@@ -49,5 +49,5 @@ cd text-dedup-main && python -m text_dedup.minhash \
 python scripts/deduplication/deduplication_upload.py
 ```
 
-This whole process will take a few hours to run. If the computer crashes due to memory issues, we can deal with half of the files 
+The whole process will take a few hours to run.
 
