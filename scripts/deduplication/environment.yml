@@ -7,6 +7,5 @@ dependencies:
   - pandas
   - datasets
   - MinHash 
-  - sentence_transformers 
   - bioconda sourmash
   
