@@ -44,10 +44,10 @@ cd text-dedup-main && python -m text_dedup.minhash \
 --ngram 2
 ```
 
-8. Upload the data to hugginface - once again remember to set your huggingface username:
+8. Upload the dataset to huggingface - once again remember to set your username at the start of the script:
 ```bash 
 python scripts/deduplication/deduplication_upload.py
 ```
 
-The whole process will take a few hours to run.
+This whole process will take a few hours to run.
 
