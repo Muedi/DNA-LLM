@@ -20,9 +20,34 @@ conda activate deduplication
 huggingface-cli login
 ```
 
-5. Run the dataset prep script - before running the data prep script make sure to fix the huggingface
+5. Run the dataset prep script - before running the data prep script make sure to change the  huggingface username to yours at the start of the script
 ```bash
 python ~DNA-LLM/scripts/deduplication/data_prep.py
 ```
 
+6. Copy Chenghao Mou's dediplication repo into your enviroment
+```bash
+wget https://github.com/ChenghaoMou/text-dedup/archive/refs/heads/main.zip -O dedup.zip
+unzip dedup.zip
+```
+
+7. Run the dedup script:
+```bash 
+cd text-dedup-main && python -m text_dedup.minhash \
+--path "{username}/ncbi_genbank_full_2000_bp_chunks" \
+--split "train" \
+--cache_dir "./cache" \
+--output "output/minhash/ncbi_genbank_full_2000_bp_chunks" \
+--column "chunks" \
+--batch_size 10000 \
+--num_perm 250 \
+--ngram 2
+```
+
+8. Upload the data to hugginface - once again remember to set your huggingface username:
+```bash 
+python scripts/deduplication/deduplication_upload.py
+```
+
+This whole process will take a few hours to run. If the computer crashes due to memory issues, we can deal with half of the files 
 

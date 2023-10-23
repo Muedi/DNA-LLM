@@ -2,7 +2,7 @@ from datasets import load_dataset, concatenate_datasets
 from itertools import islice
 
 ## set your huggingface username
-username = "Hack90"
+USERNAME = "Hack90"
 
 ## reshape sequences to chunks of spaced 2000 nucleotides
 def chunk_sequences(examples: dict) -> dict:
@@ -40,9 +40,22 @@ full_dataset = full_dataset.filter(lambda example: example["seq_length"] == 2000
 ## reshape sequences to chunks of spaced 2000 nucleotides
 full_dataset = dataset.map(chunk_sequences)
 
-## save the dataset to local disk and push it to huggingface dataset
-full_dataset.save_to_disk("dna_llm/ncbi_genbank_full_2000_bp_chunks")
-full_dataset.push_to_hub(f"{username}/ncbi_genbank_full_2000_bp_chunks")
+# expload dataset to chunks
+full_dataset = full_dataset.with_format("pandas").map(lambda df: df.explode(
+    ["chunks", "chunk_length"]))
+
+# drop empty chunks
+full_dataset = full_dataset.filter(lambda example: example["chunks"] != "")
+
+# remove the original sequence and sequence length columns
+chunks_dataset = full_dataset.remove_columns(["sequence", "seq_length"])
+
+## save the chunked dataset to local disk and push it to huggingface dataset
+chunks_dataset.save_to_disk("dna_llm/ncbi_genbank_full_2000_bp_chunks")
+chunks_dataset.push_to_hub(f"{USERNAME}/ncbi_genbank_full_2000_bp_chunks")
+
+## save the full length seq dataset to huggingface 
+full_dataset.remove_columns(['chunks', 'chunk_length']).push_to_hub(f"{USERNAME}/ncbi_genbank_full")
 
 
 
