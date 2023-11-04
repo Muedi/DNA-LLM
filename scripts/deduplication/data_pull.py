@@ -22,8 +22,6 @@ import concurrent.futures
 import logging
 
 
-import logging
-
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def batched(iterable, n):
@@ -89,10 +87,27 @@ def process_file(file, file_count):
             seqs_data['name'].append(str(record.name))
             seqs_data['description'].append(str(record.description))
             seqs_data['features'].append(len(record.features))
-            seqs_data['seq_length'].append(len(str(record.seq)))
-            
+            seqs_data['seq_length'].append(len(str(record.seq)))       
         count = file_count[file]  
         df = pd.DataFrame(seqs_data)
+        ## checking if any seq length is above the 2GB limit of pyarrow
+        ## and if so, splitting that row into batches of 2GB
+        if any(df.seq_length > 2147483647):
+            logging.info(f"splitting {file}")
+            df_less = df[df.seq_length < 2147483647]
+            df_more = df[df.seq_length > 2147483647]
+            df_more = df_more.reset_index(drop=True)
+            # splitting the sequence into batches of 2GB
+            df_more['sequence'] = df_more.sequence.apply(lambda x: list(batched(x, 2147483647)))
+            # exploding the sequence column
+            df_more = df_more.explode('sequence')
+            df_more = df_more.reset_index(drop=True)
+            df_more['seq_length'] = df_more.sequence.str.len()
+            # dropping the original df_more row
+            df_more = df_more.drop(df_more[df_more.seq_length > 2147483647].index)
+            # appending the two dataframes
+            df = df_less.append(df_more)
+            df = df.reset_index(drop=True)
         logging.info(f"writing {file}")
         df.to_parquet(f'file_{count}.parquet')
     except Exception as e:
@@ -120,7 +135,6 @@ def process_total(files):
 
         with concurrent.futures.ProcessPoolExecutor() as executor:
             results = list(executor.map(process_file, files, [file_count]*len(files)))
-
         for result in results:
             logging.info(result)
     except Exception as e:
@@ -130,11 +144,8 @@ def process_total(files):
         dataset = load_dataset("parquet", data_files="**.parquet")
         date = time.strftime("%Y%m%d")
         print('pushing to hub')
-
         dataset.push_to_hub(f'Hack90/ncbi_genbank_full_{date}')
         dataset.cleanup_cache_files()
         print('done')
         logging.info('Done with process_total')
-
 process_total(gz_links)
-
