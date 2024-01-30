@@ -90,8 +90,12 @@ def process_file(file, file_count):
             del df
             # splitting the sequence into batches of 2GB
             df_more['sequence'] = df_more.sequence.apply(lambda x: list(batched(x, 2_000_000_000)))
-            # exploding the sequence column
-            df_more = df_more.explode('sequence')
+            # batch numbers for each row
+            df_more['batch'] = df_more.sequence.apply(lambda x: len(x))
+            # batch id list for each row
+            df_more['batch_id'] = df_more.batch.apply(lambda x: list(range(x)))
+            # exploding the sequence column and creating a new row for each batch
+            df_more = df_more.explode(['sequence','batch_id'])
             # merge sequences
             df_more.sequence = df_more.sequence.apply(lambda x: ''.join(x))
             df_more['seq_length'] = df_more.sequence.str.len()
@@ -134,9 +138,9 @@ def process_total(files):
     finally:
         print('loading parquet files')
         dataset = load_dataset("parquet", data_files="**.parquet")
-        date = time.strftime("%Y%m%d")
+        date = time.strftime("%Y_%m_%d")
         print('pushing to hub')
-        dataset.push_to_hub(f'Hack90/ncbi_genbank_full_v1_{date}')
+        dataset.push_to_hub(f'Hack90/ncbi_genbank_full_v2_{date}')
         dataset.cleanup_cache_files()
         print('done')
         logging.info('Done with process_total')

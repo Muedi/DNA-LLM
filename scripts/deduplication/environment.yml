@@ -1,4 +1,4 @@
-name: deduplication
+name: data_prep
 channels:
   - conda-forge
 dependencies:
