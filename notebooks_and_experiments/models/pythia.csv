@@ -1,0 +1,6 @@
+Params,max_pos_emb,n_layers,d_model,intermediate_size,n_heads,d_head,hidden_size,Batch Size,Learning Rate
+14M,2048,6,128,512,4,32,128,2M,1.00E-03
+31M,2048,6,256,1024,8,32,256,2M,1.00E-03
+70M,2048,6,512,2048,8,64,512,2M,1.00E-03
+160M,2048,12,768,3072,12,64,768,2M,6.00E-04
+410M,2048,24,1024,4096,16,64,1024,2M,3.00E-04
