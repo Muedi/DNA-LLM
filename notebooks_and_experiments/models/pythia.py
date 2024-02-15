@@ -5,8 +5,8 @@ import pandas as pd
 from transformers import TrainingArguments, Trainer, GPTNeoXForCausalLM, AutoTokenizer, GPTNeoXForCausalLM, AutoTokenizer, GPTNeoXConfig
 
 PARAMS = '14M'
-config = pd.read_csv('pythia.csv')
-config = config[config['params'] == PARAMS]
+config = pd.read_csv('/content/pythia.csv')
+config = config[config['Params'] == PARAMS]
 
 # creating model with experiment configuration
 configuration = GPTNeoXConfig()
@@ -16,10 +16,6 @@ configuration.num_hidden_layers =  int(config['n_layers'].values[0])
 configuration.layer_norm_eps= float(config['Learning Rate'].values[0])
 configuration.vocab_size = 8
 model = GPTNeoXForCausalLM(configuration)
-
-model = GPTNeoXForCausalLM.from_config(
-  configuration
-)
 
 tokenizer = AutoTokenizer.from_pretrained(
   "hack90/virus_pythia_small"
