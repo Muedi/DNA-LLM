@@ -71,20 +71,7 @@ def process_file(file, file_count):
     }
     try:
         for record in SeqIO.parse(file, "genbank"):
-            seqs_data['id'].append(str(record.id))
-            seqs_data['sequence'].append(str(record.seq))
-            seqs_data['name'].append(str(record.name))
-            seqs_data['description'].append(str(record.description))
-            seqs_data['features'].append(len(record.features))
-            seqs_data['seq_length'].append(len(str(record.seq)))       
-        count = file_count[file]  
-        df = pd.DataFrame(seqs_data)
-        ## checking if any seq length is above the 2GB limit of pyarrow
-        ## and if so, splitting that row into batches of 2GB
-        if any(df.seq_length > 2_000_000_000):
-            n = len(df[df.seq_length > 2_000_000_000])
-            logging.info(f"the file has {n} rows with seq_length > 2GB"))
-            df_less = df[df.seq_length < 2_000_000_000].copy()
+          _000_000].copy()
             df_more = df[df.seq_length > 2_000_000_000].copy()
             # deleting the original df to save memory
             del df
@@ -109,7 +96,20 @@ def process_file(file, file_count):
         logging.error(f'Error processing {file}: {e}')
     finally:
         subprocess.run(f"rm {file}", shell=True)
-
+  seqs_data['id'].append(str(record.id))
+            seqs_data['sequence'].append(str(record.seq))
+            seqs_data['name'].append(str(record.name))
+            seqs_data['description'].append(str(record.description))
+            seqs_data['features'].append(len(record.features))
+            seqs_data['seq_length'].append(len(str(record.seq)))       
+        count = file_count[file]  
+        df = pd.DataFrame(seqs_data)
+        ## checking if any seq length is above the 2GB limit of pyarrow
+        ## and if so, splitting that row into batches of 2GB
+        if any(df.seq_length > 2_000_000_000):
+            n = len(df[df.seq_length > 2_000_000_000])
+            logging.info(f"the file has {n} rows with seq_length > 2GB"))
+            df_less = df[df.seq_length < 2_000
 
 def download_file(file):
     command = f'wget https://ftp.ncbi.nlm.nih.gov/genbank/{file}'
