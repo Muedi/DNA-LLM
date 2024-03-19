@@ -169,8 +169,9 @@ class AutoregressiveWrapper(Module):
         ph_loss = persim.bottleneck(dgm1, dgm2)
         # convert to tensor
         ph_loss = torch.tensor(ph_loss)
-
-        loss = loss + ph_loss
+        
+        loss = ph_loss #loss + 
+       # ph_loss
 
         if add_attn_z_loss:
             loss = loss + cache.attn_z_loss
@@ -223,15 +224,22 @@ dna_sequences = [30, 31, 30, 31, 28, 31, 31, 30, 28, 31, 29, 31, 31, 29, 30, 31,
        30, 31, 31, 30, 31, 31, 29, 30, 29, 31, 30, 29, 28, 30, 31, 28, 30,
        28, 28, 30, 29, 30, 29, 29, 31, 29, 29, 28, 30, 29]
 
-
+# convert to tensor
+dna_sequences = torch.tensor(dna_sequences)
+# reshape to 1, 64
+dna_sequences = dna_sequences.reshape(1, 64)
+a = torch.tensor(([28, 31, 30, 31, 28, 29, 30, 31, 31, 29, 30, 28, 28, 29, 29, 31, 29,30, 31, 31, 29, 28, 31, 31, 30, 29, 28, 28, 29, 28, 30, 31, 31, 28, 31, 29, 28, 29, 31, 31, 28, 30, 28, 28, 29, 31, 31, 31, 31, 30, 31, 28, 30, 28, 28, 28, 28, 31, 28, 29, 30, 30, 28, 31]))
+a = a.reshape(1, 64)
+ab = [a, dna_sequences]
+print(dna_sequences.shape)
 
 ##### example usage of the persistent homology layer ####
 import torch
 from x_transformers import TransformerWrapper, Decoder, AutoregressiveWrapper
 
 model = TransformerWrapper(
-    num_tokens = 20000,
-    max_seq_len = 1024,
+    num_tokens = 32,
+    max_seq_len = 64,
     attn_layers = Decoder(
         dim = 512,
         depth = 12,
@@ -248,6 +256,8 @@ model = AutoregressiveWrapper(
 x = torch.randint(0, 20000, (1, 1024))
 
 # derive cross entropy loss, masking all taken care of
+for i in range(0,2):
+    loss = model(ab[i])
+    print(loss)
+    loss.backward()
 
-loss = model(x)
-loss.backward()
