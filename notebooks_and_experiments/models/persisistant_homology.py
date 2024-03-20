@@ -160,12 +160,17 @@ class AutoregressiveWrapper(Module):
             ignore_index = ignore_index
         )
         ph_layer = PersistentHomologyLayer()
-        model_outputs = rearrange(logits, 'b n c -> b n c')
-        # convert to list
-        model_outputs = model_outputs.tolist()
-        target = target.tolist()
-        dgm1 = ph_layer(model_outputs)
-        dgm2 = ph_layer(target)
+        # convert the logits to dna sequences by taking the argmax
+        model_outputs = torch.argmax(logits, dim=2)
+        print('model_outputs_shape',  model_outputs.shape)
+        model_outputs = model_outputs.tolist()[0]
+       # print(model_outputs)#, model_outputs.shape)
+        target = target.tolist()[0]
+        dgm1 , coverage_1 = ph_layer(model_outputs)
+        dgm2 , coverage_2 = ph_layer(target)
+        if coverage_1 < 0.5 or coverage_2 < 0.5:
+            print("Coverage is less than 0.5")
+            return loss#, (logits, cache)
         ph_loss = persim.bottleneck(dgm1, dgm2)
         # convert to tensor
         ph_loss = torch.tensor(ph_loss)
@@ -195,10 +200,13 @@ class PersistentHomologyLayer(torch.nn.Module):
         }
 
     def encode_nucleotide_to_vector(self, nucleotide):
+     #   print(nucleotide)
         return self.nucleotide_mapping.get(nucleotide)
 
     def chaos_4d_representation(self, dna_sequence):
         points = [self.encode_nucleotide_to_vector(dna_sequence[0])]
+        if points[0] is None:
+            points[0] = np.array([0, 0, 0, 0])
         for nucleotide in dna_sequence[1:]:
             vector = self.encode_nucleotide_to_vector(nucleotide)
             if vector is None:
@@ -209,9 +217,11 @@ class PersistentHomologyLayer(torch.nn.Module):
 
     def forward(self, dna_sequences):
         c4dr_points = []
+     #   print(len(dna_sequences))
         points = self.chaos_4d_representation(dna_sequences)
+        coverage = len(points)/ len(dna_sequences)
         dgm = ripser.ripser(points, maxdim=2)['dgms']
-        return dgm[1]
+        return dgm[0] , coverage
     
 # persistant homology loss
 def ph_loss(dgm1, dgm2):
@@ -228,14 +238,14 @@ dna_sequences = [30, 31, 30, 31, 28, 31, 31, 30, 28, 31, 29, 31, 31, 29, 30, 31,
 dna_sequences = torch.tensor(dna_sequences)
 # reshape to 1, 64
 dna_sequences = dna_sequences.reshape(1, 64)
-a = torch.tensor(([28, 31, 30, 31, 28, 29, 30, 31, 31, 29, 30, 28, 28, 29, 29, 31, 29,30, 31, 31, 29, 28, 31, 31, 30, 29, 28, 28, 29, 28, 30, 31, 31, 28, 31, 29, 28, 29, 31, 31, 28, 30, 28, 28, 29, 31, 31, 31, 31, 30, 31, 28, 30, 28, 28, 28, 28, 31, 28, 29, 30, 30, 28, 31]))
+a = torch.tensor([28, 31, 30, 31, 28, 29, 30, 31, 31, 29, 30, 28, 28, 29, 29, 31, 29,30, 31, 31, 29, 28, 31, 31, 30, 29, 28, 28, 29, 28, 30, 31, 31, 28, 31, 29, 28, 29, 31, 31, 28, 30, 28, 28, 29, 31, 31, 31, 31, 30, 31, 28, 30, 28, 28, 28, 28, 31, 28, 29, 30, 30, 28, 31])
 a = a.reshape(1, 64)
 ab = [a, dna_sequences]
 print(dna_sequences.shape)
 
 ##### example usage of the persistent homology layer ####
 import torch
-from x_transformers import TransformerWrapper, Decoder, AutoregressiveWrapper
+from x_transformers import TransformerWrapper, Decoder #,AutoregressiveWrapper
 
 model = TransformerWrapper(
     num_tokens = 32,
@@ -248,7 +258,7 @@ model = TransformerWrapper(
 )
 
 model = AutoregressiveWrapper(
-    model
+    model,  mask_prob = 0.15
 )
 
 # mock data
@@ -257,6 +267,7 @@ x = torch.randint(0, 20000, (1, 1024))
 
 # derive cross entropy loss, masking all taken care of
 for i in range(0,2):
+    print(ab[i], ab[i].shape)
     loss = model(ab[i])
     print(loss)
     loss.backward()
