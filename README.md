@@ -16,7 +16,7 @@ ToDo:
 3. Create a description - sequence dataset. This will allow us to create a chat like model for creating sequences based on description. An SSM model trained on multimodel datasets can then be finetuned on D-S dataset.
 4. Model scaling scripts
 
-## Links (warning, most these links will be out of date due to biosafety considerations)
+## Links *most of these will be out of sync due to biosafety considerations*
 - [HuggingFace Space](https://huggingface.co/spaces/Hack90/virus_explorer)
 - [Project proposal](https://github.com/hssn-20/project-proposal-template)
 - [Project workbook](https://docs.google.com/spreadsheets/d/15kc9B6E9O3NX73mFRRXoo8AS_IDCGJ48RHb18I63mNk/edit?usp=sharing)
