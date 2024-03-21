@@ -18,7 +18,7 @@ ToDo:
 
 ## Links - *most of these will be out of sync due to biosafety considerations*
 - [HuggingFace Space](https://huggingface.co/spaces/Hack90/virus_explorer)
-- [Project proposal](https://github.com/hssn-20/project-proposal-template)
+- [Project proposal](https://github.com/hssn-20/project-proposal-template/tree/patch-1)
 - [Project workbook](https://docs.google.com/spreadsheets/d/15kc9B6E9O3NX73mFRRXoo8AS_IDCGJ48RHb18I63mNk/edit?usp=sharing)
 - [Project weekly slides](https://docs.google.com/presentation/d/1_ygnfKfCyEijrYwlbFfaoJ86T7PLmWovUXToiVrmfl8/edit?usp=sharing)
 - [Project overview](https://docs.google.com/presentation/d/1VxHHlj-oJJP8QqPrabcQv0-YYwXhQwiZx7HRmBJ3lb4/edit?usp=sharing)
