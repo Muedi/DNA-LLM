@@ -177,7 +177,7 @@ def contrastive_decode_fn(
     diffs = (1 + beta) * expert_logits - beta * amateur_logits
     contrastive_decode_logits = diffs.masked_fill(expert_logits < cutoff, -torch.finfo(expert_logits.dtype).max)
     return contrastive_decode_logits
-
+##### Gudhi topoloss ####
 # autoregressive wrapper class
 
 class AutoregressiveWrapper(Module):
@@ -204,13 +204,13 @@ class AutoregressiveWrapper(Module):
         self.add_attn_z_loss = add_attn_z_loss
 
  
-
+    @staticmethod
     def forward(self, x, return_outputs = False, **kwargs):
         seq, ignore_index, add_attn_z_loss = x.shape[1], self.ignore_index, self.add_attn_z_loss
 
         inp, target = x[:, :-1], x[:, 1:]
         inp = torch.where(inp == ignore_index, self.pad_value, inp)
-
+        target = target.clone().detach()
         if self.mask_prob > 0.:
             rand = torch.randn(inp.shape, device = x.device)
             rand[:, 0] = -torch.finfo(rand.dtype).max # first token should not be masked out
@@ -232,19 +232,25 @@ class AutoregressiveWrapper(Module):
         )
         ph_layer = PersistentHomologyLayer()
         # convert the logits to dna sequences by taking the argmax
-        model_outputs = torch.argmax(logits, dim=2)
+        model_outputs = torch.argmax(logits, dim=2).clone().detach()
         print('model_outputs_shape',  model_outputs.shape)
         model_outputs = model_outputs.tolist()[0]
        # print(model_outputs)#, model_outputs.shape)
         target = target.tolist()[0]
-        dgm1 , coverage_1 = ph_layer(model_outputs)
-        dgm2 , coverage_2 = ph_layer(target)
+        nucl_mapping =  {
+            3: np.array([1, 0, 0, 0]),
+            4: np.array([0, 1, 0, 0]),
+            5: np.array([0, 0, 1, 0]),
+            6: np.array([0, 0, 0, 1])
+        }
+        dgm1 , coverage_1 = ph_layer(model_outputs, 7,nucl_mapping)
+        dgm2 , coverage_2 = ph_layer(target, 7,nucl_mapping)
         if coverage_1 < 0.5 or coverage_2 < 0.5:
             print("Coverage is less than 0.5")
             return loss#, (logits, cache)
         ph_loss = persim.bottleneck(dgm1, dgm2)
         # convert to tensor
-        ph_loss = torch.tensor(ph_loss)
+        ph_loss = torch.tensor(ph_loss).clone().detach().requires_grad_(True)
         
         loss = ph_loss #loss + 
        # ph_loss
@@ -259,7 +265,7 @@ class AutoregressiveWrapper(Module):
     
 ##### Personal code ####################
 # persistent homology layer
-class PersistentHomologyLayer(torch.nn.Module):
+class PersistentHomologyLayer(torch.autograd.Function):
     def __init__(self, sample_rate=10):
         super(PersistentHomologyLayer, self).__init__()
         self.sample_rate = sample_rate
@@ -269,31 +275,36 @@ class PersistentHomologyLayer(torch.nn.Module):
             5: np.array([0, 0, 1, 0]),
             6: np.array([0, 0, 0, 1])
         }
+    
+    @staticmethod
+    def encode_nucleotide_to_vector(nucleotide, nucleotide_mapping):
+        return nucleotide_mapping.get(nucleotide)
+     #   return self.nucleotide_mapping.get(nucleotide)
 
-    def encode_nucleotide_to_vector(self, nucleotide):
-     #   print(nucleotide)
-        return self.nucleotide_mapping.get(nucleotide)
+    @staticmethod
+    def chaos_4d_representation(dna_sequence, nucleotide_mapping):
+        def encode_nucleotide_to_vector(nucleotide):
+            return nucleotide_mapping.get(nucleotide)
 
-    def chaos_4d_representation(self, dna_sequence):
-        points = [self.encode_nucleotide_to_vector(dna_sequence[0])]
+        points = [encode_nucleotide_to_vector(dna_sequence[0])]
         if points[0] is None:
             points[0] = np.array([0, 0, 0, 0])
         for nucleotide in dna_sequence[1:]:
-            vector = self.encode_nucleotide_to_vector(nucleotide)
+            vector = encode_nucleotide_to_vector(nucleotide)
             if vector is None:
                 continue
             next_point = 0.5 * (points[-1] + vector)
             points.append(next_point)
         return np.array(points)
 
-    def forward(self, dna_sequences):
+    @staticmethod
+    def forward(dna_sequences, sample_rate, nucleotide_mapping):
         c4dr_points = []
-     #   print(len(dna_sequences))
-        points = self.chaos_4d_representation(dna_sequences)
-        coverage = len(points)/ len(dna_sequences)
-        points = points[::self.sample_rate]
+        points = PersistentHomologyLayer.chaos_4d_representation(dna_sequences, nucleotide_mapping)
+        coverage = len(points) / len(dna_sequences)
+        points = points[::sample_rate]
         dgm = ripser.ripser(points, maxdim=2)['dgms']
-        return dgm[0] , coverage
+        return dgm[0], coverage
     
 # persistant homology loss
 def ph_loss(dgm1, dgm2):
@@ -341,7 +352,7 @@ for i in range(0,100):
     print(seqs[i], seqs[i].shape)
        # Zero the gradients
     optimizer.zero_grad()
-    loss = model(seqs[i])
+    loss = model(model, x = seqs[i])
     print(loss)
     loss.backward()
     optimizer.step()
