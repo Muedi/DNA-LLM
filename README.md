@@ -1,6 +1,6 @@
 # DNA-LLM
 
-## Quicklinks - *most of these will be out of sync, contact either me (@utterly_butterly) or Max Sprang(@de_muedi) on discord for updates/collaborations*
+#### Quicklinks - *most of these will be out of sync, contact either me (@utterly_butterly) or Max Sprang(@de_muedi) on discord for updates/collaborations*
 - [HuggingFace Space](https://huggingface.co/spaces/Hack90/virus_explorer)
 - [Project workbook](https://docs.google.com/spreadsheets/d/15kc9B6E9O3NX73mFRRXoo8AS_IDCGJ48RHb18I63mNk/edit?usp=sharing)
 - [Project weekly slides](https://docs.google.com/presentation/d/1_ygnfKfCyEijrYwlbFfaoJ86T7PLmWovUXToiVrmfl8/edit?usp=sharing)
